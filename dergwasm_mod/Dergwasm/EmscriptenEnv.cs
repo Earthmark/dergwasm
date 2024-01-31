@@ -27,7 +27,7 @@ namespace Derg
 
     // Host environment expected by Emscripten.
     [Mod("env")]
-    public class EmscriptenEnv : IWasmAllocator
+    public class EmscriptenEnv
     {
         public Machine machine;
         public Action<string> outputWriter = null;
@@ -45,28 +45,6 @@ namespace Derg
             Frame frame = new Frame(f, machine.mainModuleInstance, null);
             frame.Label = new Label(0, 0);
             return frame;
-        }
-
-        Ptr IWasmAllocator.Malloc(Frame frame, int size) => new Ptr(Malloc(frame, size));
-
-        public void Free(Frame frame, Ptr buffer) => Free(frame, buffer.Addr);
-
-        // Allocates `size` bytes in WASM memory and returns the pointer to it.
-        // Virtual for testing.
-        public virtual int Malloc(Frame frame, int size)
-        {
-            if (frame == null)
-                frame = EmptyFrame();
-
-            return malloc(frame, size);
-        }
-
-        public void Free(Frame frame, int ptr)
-        {
-            if (frame == null)
-                frame = EmptyFrame();
-
-            free(frame, ptr);
         }
 
         // Allocates a UTF-8 encoded string on the heap in length-data format
@@ -151,172 +129,6 @@ namespace Derg
             }
             return wasmTable.Elements[index];
         }
-
-        //
-        // The CallIndirectFuncs were here because at some point the invoke_* functions
-        // seemed to access the __indirect_function_table rather than calling dyncall_*
-        // directly. I am not sure what makes the difference. It's possible that Emscripten
-        // uses an indirect function table for small numbers of functions, but splits them
-        // up into dyncalls for larger numbers of functions. That's just speculation.
-        //
-
-        void CallIndirectFunc(int index, Frame frame) =>
-            machine.CallFunc(machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr), frame);
-
-        void CallIndirectFunc<T1>(int index, Frame frame, T1 arg1)
-            where T1 : unmanaged =>
-            machine.CallFunc(machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr), frame, arg1);
-
-        void CallIndirectFunc<T1, T2>(int index, Frame frame, T1 arg1, T2 arg2)
-            where T1 : unmanaged
-            where T2 : unmanaged =>
-            machine.CallFunc(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2
-            );
-
-        void CallIndirectFunc<T1, T2, T3>(int index, Frame frame, T1 arg1, T2 arg2, T3 arg3)
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged =>
-            machine.CallFunc(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3
-            );
-
-        void CallIndirectFunc<T1, T2, T3, T4>(
-            int index,
-            Frame frame,
-            T1 arg1,
-            T2 arg2,
-            T3 arg3,
-            T4 arg4
-        )
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged
-            where T4 : unmanaged =>
-            machine.CallFunc(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3,
-                arg4
-            );
-
-        void CallIndirectFunc<T1, T2, T3, T4, T5>(
-            int index,
-            Frame frame,
-            T1 arg1,
-            T2 arg2,
-            T3 arg3,
-            T4 arg4,
-            T5 arg5
-        )
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged
-            where T4 : unmanaged
-            where T5 : unmanaged =>
-            machine.CallFunc(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3,
-                arg4,
-                arg5
-            );
-
-        R CallIndirectFunc<R>(int index, Frame frame)
-            where R : unmanaged =>
-            machine.CallFunc<R>(machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr), frame);
-
-        R CallIndirectFunc<R, T1>(int index, Frame frame, T1 arg1)
-            where R : unmanaged
-            where T1 : unmanaged =>
-            machine.CallFunc<R, T1>(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1
-            );
-
-        R CallIndirectFunc<R, T1, T2>(int index, Frame frame, T1 arg1, T2 arg2)
-            where R : unmanaged
-            where T1 : unmanaged
-            where T2 : unmanaged =>
-            machine.CallFunc<R, T1, T2>(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2
-            );
-
-        R CallIndirectFunc<R, T1, T2, T3>(int index, Frame frame, T1 arg1, T2 arg2, T3 arg3)
-            where R : unmanaged
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged =>
-            machine.CallFunc<R, T1, T2, T3>(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3
-            );
-
-        R CallIndirectFunc<R, T1, T2, T3, T4>(
-            int index,
-            Frame frame,
-            T1 arg1,
-            T2 arg2,
-            T3 arg3,
-            T4 arg4
-        )
-            where R : unmanaged
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged
-            where T4 : unmanaged =>
-            machine.CallFunc<R, T1, T2, T3, T4>(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3,
-                arg4
-            );
-
-        R CallIndirectFunc<R, T1, T2, T3, T4, T5>(
-            int index,
-            Frame frame,
-            T1 arg1,
-            T2 arg2,
-            T3 arg3,
-            T4 arg4,
-            T5 arg5
-        )
-            where R : unmanaged
-            where T1 : unmanaged
-            where T2 : unmanaged
-            where T3 : unmanaged
-            where T4 : unmanaged
-            where T5 : unmanaged =>
-            machine.CallFunc<R, T1, T2, T3, T4, T5>(
-                machine.GetFunc(GetWasmTableEntry(frame, index).RefAddr),
-                frame,
-                arg1,
-                arg2,
-                arg3,
-                arg4,
-                arg5
-            );
 
         //
         // Exports from WASM

@@ -5,6 +5,9 @@ using Derg.Wasm;
 
 namespace Derg
 {
+    /// <summary>
+    /// An executor for wasm modules.
+    /// </summary>
     public class Machine
     {
         bool debug = false;
@@ -26,25 +29,25 @@ namespace Derg
         public List<Memory> memories = new List<Memory>();
         public List<byte[]> dataSegments = new List<byte[]>();
 
-        public IWasmAllocator Allocator;
+        public IWasmAllocator Allocator = new LibC();
 
         public unsafe Ptr<T> HeapAlloc<T>(Frame frame)
             where T : struct
         {
-            return Allocator.Malloc(frame, sizeof(T)).Reinterpret<T>();
+            return Allocator.Malloc(this, frame, sizeof(T)).Reinterpret<T>();
         }
 
         public unsafe Buff<T> HeapAlloc<T>(Frame frame, int count)
             where T : struct
         {
-            return Allocator.Malloc(frame, sizeof(T) * count).Reinterpret<T>().ToBuffer(count);
+            return Allocator.Malloc(this, frame, sizeof(T) * count).Reinterpret<T>().ToBuffer(count);
         }
 
         public unsafe PrefixBuff<T> HeapAllocPrefix<T>(Frame frame, int count)
             where T : struct
         {
             var prefix = new PrefixBuff<T>(
-                Allocator.Malloc(frame, sizeof(int) + sizeof(T) * count)
+                Allocator.Malloc(this, frame, sizeof(int) + sizeof(T) * count)
             );
             HeapSet(prefix.Length, count);
             return prefix;

@@ -213,7 +213,6 @@ namespace Derg
                 {
                     outputWriter = Output
                 };
-                machine.Allocator = emscriptenEnv;
                 machine.RegisterReflectedModule(emscriptenEnv);
 
                 emscriptenWasi = new EmscriptenWasi(machine, emscriptenEnv);
